@@ -1,9 +1,19 @@
 {
-  "name": "minebot",
+  "name": "mcbot",
   "version": "1.0.0",
+  "description": "Mineflayer bot for Minecraft server",
   "main": "bot.js",
   "type": "module",
+  "scripts": {
+    "start": "node bot.js"
+  },
   "dependencies": {
-    "mineflayer": "^4.18.0"
-  }
+    "mineflayer": "^4.7.1",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "author": "DrakVortexx",
+  "license": "MIT"
 }
