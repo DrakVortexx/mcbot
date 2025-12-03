@@ -1,0 +1,9 @@
+{
+  "name": "minebot",
+  "version": "1.0.0",
+  "main": "bot.js",
+  "type": "module",
+  "dependencies": {
+    "mineflayer": "^4.18.0"
+  }
+}
