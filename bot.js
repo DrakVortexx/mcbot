@@ -1,12 +1,30 @@
 import mineflayer from "mineflayer"
+import express from "express"
 
 let bot
 
+// -------------------------------
+//  KEEPALIVE WEB SERVER FOR RENDER
+// -------------------------------
+const app = express()
+
+app.get("/", (req, res) => {
+  res.send("Mineflayer bot is running on Render!")
+})
+
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log("Keepalive server running on port", PORT)
+})
+
+// -------------------------------
+//  MINEFLAYER BOT START
+// -------------------------------
 function startBot() {
   bot = mineflayer.createBot({
     host: "fa.mc.gg",
     port: 25565,
-    username: "MinerBot" // change this if you want
+    username: "MinerBot"
   })
 
   bot.once("spawn", () => {
@@ -19,17 +37,16 @@ function startBot() {
     setTimeout(startBot, 10000)
   })
 
-  bot.on("error", (err) => {
+  bot.on("error", err => {
     console.log("Bot error:", err.message)
   })
 }
 
 startBot()
 
-// ---------------------------
-// Mining System
-// ---------------------------
-
+// -------------------------------
+//  MINING SYSTEM
+// -------------------------------
 const RADIUS = 4
 
 async function mineLoop() {
@@ -40,16 +57,13 @@ async function mineLoop() {
       if (target) {
         console.log("Mining:", target.name)
 
-        // Look at block
         await bot.lookAt(target.position.offset(0.5, 0.5, 0.5))
-
-        // Dig block
         await bot.dig(target)
       }
+
     } catch (err) {
       console.log("Error:", err.message)
     }
-
     await sleep(500)
   }
 }
