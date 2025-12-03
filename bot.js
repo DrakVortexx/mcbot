@@ -1,34 +1,51 @@
 import mineflayer from "mineflayer"
 
-const bot = mineflayer.createBot({
-  host: "fa.mc.gg",
-  port: 25565,
-  username: "MinerBot" // change name if needed
-})
+let bot
 
-// Search radius for breaking blocks
+function startBot() {
+  bot = mineflayer.createBot({
+    host: "fa.mc.gg",
+    port: 25565,
+    username: "MinerBot" // change this if you want
+  })
+
+  bot.once("spawn", () => {
+    console.log("Bot spawned! Starting mining loop...")
+    mineLoop()
+  })
+
+  bot.on("end", () => {
+    console.log("Bot disconnected. Reconnecting in 10 seconds...")
+    setTimeout(startBot, 10000)
+  })
+
+  bot.on("error", (err) => {
+    console.log("Bot error:", err.message)
+  })
+}
+
+startBot()
+
+// ---------------------------
+// Mining System
+// ---------------------------
+
 const RADIUS = 4
 
-bot.once("spawn", () => {
-  console.log("Bot spawned! Starting mining loop...")
-  mineLoop()
-})
-
 async function mineLoop() {
-  while (true) {
+  while (bot && bot.entity) {
     try {
       const target = findBlockToMine()
 
       if (target) {
         console.log("Mining:", target.name)
-        
-        await bot.pathfinder?.goto ?
-          bot.pathfinder.goto(bot.pathfinder.movements.follow(target.position)) :
-          bot.lookAt(target.position.offset(0.5, 0.5, 0.5))
 
+        // Look at block
+        await bot.lookAt(target.position.offset(0.5, 0.5, 0.5))
+
+        // Dig block
         await bot.dig(target)
       }
-
     } catch (err) {
       console.log("Error:", err.message)
     }
@@ -38,6 +55,7 @@ async function mineLoop() {
 }
 
 function findBlockToMine() {
+  if (!bot) return null
   return bot.findBlock({
     matching: block => block && block.name !== "air",
     maxDistance: RADIUS
@@ -47,6 +65,3 @@ function findBlockToMine() {
 function sleep(ms) {
   return new Promise(r => setTimeout(r, ms))
 }
-
-bot.on("error", err => console.log("Bot error:", err))
-bot.on("end", () => console.log("Bot disconnected"))
