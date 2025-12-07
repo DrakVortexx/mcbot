@@ -13,7 +13,7 @@ let retryScheduled = false;
 const botOptions = {
   host: 'rubblesmp.aternos.me',
   port: 57916,
-  username: 'bot',
+  username: 'AFKBot',
   version: '1.21.10' // version must be a string
 };
 
