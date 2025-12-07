@@ -12,7 +12,7 @@ const botOptions = {
   host: 'rubblesmp.aternos.me',
   port: 57916,
   username: 'bot',
-  version: false
+  version: 1.21.10
 };
 
 function createBot() {
