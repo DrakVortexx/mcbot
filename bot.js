@@ -1,12 +1,13 @@
 const mineflayer = require('mineflayer');
 const http = require('http');
 
-// Keepalive server (required for Render)
+// Keepalive web server for Render
 http.createServer((req, res) => {
   res.writeHead(200);
-  res.end('Bot is running');
+  res.end('Bot is alive');
 }).listen(process.env.PORT || 3000);
 
+let bot;
 const botOptions = {
   host: 'rubblesmp.aternos.me',
   port: 57916,
@@ -14,29 +15,37 @@ const botOptions = {
   version: false
 };
 
-let bot;
-
 function createBot() {
-  bot = mineflayer.createBot(botOptions);
+  console.log("Starting bot...");
+
+  try {
+    bot = mineflayer.createBot(botOptions);
+  } catch (err) {
+    console.log("Mineflayer failed to start:", err);
+    retry();
+    return;
+  }
 
   bot.on('spawn', () => {
-    console.log('Bot spawned!');
+    console.log('Bot spawned and connected!');
   });
 
   bot.on('end', () => {
-    console.log('Bot disconnected.');
-    reconnect();
+    console.log('Bot ended. Retrying...');
+    retry();
   });
 
   bot.on('error', (err) => {
     console.log('Bot error:', err);
-    reconnect();
+    retry();
   });
 }
 
-function reconnect() {
-  console.log('Reconnecting in 60 seconds...');
-  setTimeout(createBot, 60000);
+function retry() {
+  console.log("Retrying in 30 seconds...");
+  setTimeout(() => {
+    createBot();
+  }, 30000);
 }
 
 createBot();
