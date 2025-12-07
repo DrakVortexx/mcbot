@@ -1,13 +1,11 @@
 const mineflayer = require('mineflayer');
 const http = require('http');
 
+// Keepalive web server
 http.createServer((req, res) => {
   res.writeHead(200);
   res.end('Bot is alive');
 }).listen(process.env.PORT || 3000);
-
-let bot;
-let retryTimeout;
 
 const botOptions = {
   host: 'rubblesmp.aternos.me',
@@ -16,51 +14,34 @@ const botOptions = {
   version: 'auto'
 };
 
-function createBot() {
-  console.log(`[${new Date().toISOString()}] Starting bot...`);
+function startBotCycle() {
+  console.log(`[${new Date().toISOString()}] Connecting bot...`);
 
-  if (bot) {
-    bot.removeAllListeners();
-    try { bot.quit(); } catch {}
-    bot = null;
-  }
-
-  bot = mineflayer.createBot(botOptions);
+  const bot = mineflayer.createBot(botOptions);
 
   bot.once('spawn', () => {
-    console.log(`[${new Date().toISOString()}] Bot spawned!`);
-
-    // Example: after being online 2 seconds, wait 60 seconds then reconnect
+    console.log(`[${new Date().toISOString()}] Bot connected, waiting 2 seconds...`);
+    
+    // Wait 2 seconds, then disconnect
     setTimeout(() => {
-      console.log(`[${new Date().toISOString()}] Reconnecting after 60s...`);
-      bot.quit(); // triggers 'end' event and reconnect
-    }, 62000); // 2s + 60s
+      console.log(`[${new Date().toISOString()}] Disconnecting bot...`);
+      bot.quit(); // triggers 'end' event
+    }, 2000);
   });
 
   bot.on('end', () => {
-    console.log(`[${new Date().toISOString()}] Bot disconnected.`);
-    scheduleRetry();
+    console.log(`[${new Date().toISOString()}] Bot disconnected, waiting 60 seconds before reconnecting...`);
+    
+    // Wait 60 seconds before reconnecting
+    setTimeout(() => {
+      startBotCycle(); // reconnect
+    }, 60000);
   });
 
   bot.on('error', (err) => {
     console.log(`[${new Date().toISOString()}] Bot error:`, err);
-    scheduleRetry();
-  });
-
-  bot.on('kicked', (reason) => {
-    console.log(`[${new Date().toISOString()}] Bot was kicked: ${reason}`);
-    scheduleRetry();
   });
 }
 
-function scheduleRetry() {
-  if (retryTimeout) clearTimeout(retryTimeout); // clear existing timeout
-  console.log(`[${new Date().toISOString()}] Retrying in 30 seconds...`);
-  retryTimeout = setTimeout(() => {
-    retryTimeout = null;
-    createBot();
-  }, 30000);
-}
-
-// Start the bot
-createBot();
+// Start the first cycle
+startBotCycle();
