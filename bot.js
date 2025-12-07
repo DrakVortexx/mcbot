@@ -1,42 +1,40 @@
 const mineflayer = require('mineflayer');
 const http = require('http');
 
-// Keepalive web server for Render
 http.createServer((req, res) => {
   res.writeHead(200);
   res.end('Bot is alive');
 }).listen(process.env.PORT || 3000);
 
 let bot;
-let retryScheduled = false;
+let retryTimeout;
 
 const botOptions = {
   host: 'rubblesmp.aternos.me',
   port: 57916,
   username: 'AFKBot',
-  version: '1.21.10' // version must be a string
+  version: 'auto'
 };
 
 function createBot() {
   console.log(`[${new Date().toISOString()}] Starting bot...`);
 
-  // Clean up old bot if exists
   if (bot) {
     bot.removeAllListeners();
     try { bot.quit(); } catch {}
     bot = null;
   }
 
-  try {
-    bot = mineflayer.createBot(botOptions);
-  } catch (err) {
-    console.log(`[${new Date().toISOString()}] Failed to create bot:`, err);
-    scheduleRetry();
-    return;
-  }
+  bot = mineflayer.createBot(botOptions);
 
-  bot.on('spawn', () => {
-    console.log(`[${new Date().toISOString()}] Bot spawned and connected!`);
+  bot.once('spawn', () => {
+    console.log(`[${new Date().toISOString()}] Bot spawned!`);
+
+    // Example: after being online 2 seconds, wait 60 seconds then reconnect
+    setTimeout(() => {
+      console.log(`[${new Date().toISOString()}] Reconnecting after 60s...`);
+      bot.quit(); // triggers 'end' event and reconnect
+    }, 62000); // 2s + 60s
   });
 
   bot.on('end', () => {
@@ -46,19 +44,20 @@ function createBot() {
 
   bot.on('error', (err) => {
     console.log(`[${new Date().toISOString()}] Bot error:`, err);
-    // Only retry for network/connection errors
-    if (err.code !== 'ECONNREFUSED') { 
-      scheduleRetry();
-    }
+    scheduleRetry();
+  });
+
+  bot.on('kicked', (reason) => {
+    console.log(`[${new Date().toISOString()}] Bot was kicked: ${reason}`);
+    scheduleRetry();
   });
 }
 
 function scheduleRetry() {
-  if (retryScheduled) return;
-  retryScheduled = true;
+  if (retryTimeout) clearTimeout(retryTimeout); // clear existing timeout
   console.log(`[${new Date().toISOString()}] Retrying in 30 seconds...`);
-  setTimeout(() => {
-    retryScheduled = false;
+  retryTimeout = setTimeout(() => {
+    retryTimeout = null;
     createBot();
   }, 30000);
 }
